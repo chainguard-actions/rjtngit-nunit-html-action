@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v1.0.1 | [`v1.0.1`](https://github.com/chainguard-actions/rjtngit-nunit-html-action/tree/v1.0.1) | [`2d0208d`](https://github.com/rjtngit/nunit-html-action/commit/2d0208d2a33a892c5cfe770925cae8ecee96084d) |
+| v1.0.2 | [`v1.0.2`](https://github.com/chainguard-actions/rjtngit-nunit-html-action/tree/v1.0.2) | [`f9185b1`](https://github.com/rjtngit/nunit-html-action/commit/f9185b1bc61258b154b1c495223911aeef9d902b) |
 
 ## Privacy
 
