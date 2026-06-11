@@ -1,0 +1,27 @@
+name: Test custom output path - NUnit HTML Report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          inputXmlPath: ${{ github.workspace }}/actions/hardened/rjtngit--nunit-html-action/v1.0.1/tests/fixtures/test-results.xml
+          outputHtmlPath: /tmp/nunit-report.html
+      - name: Assert custom HTML output was generated at specified path
+        run: |
+          echo "Checking for HTML report at /tmp/nunit-report.html"
+          if [ ! -f "/tmp/nunit-report.html" ]; then
+            echo "FAIL: HTML report not found at /tmp/nunit-report.html"
+            exit 1
+          fi
+          echo "File size: $(wc -c < /tmp/nunit-report.html) bytes"
+          # Verify it contains HTML content
+          if ! grep -qi "<html" /tmp/nunit-report.html; then
+            echo "FAIL: Output file does not appear to be valid HTML"
+            exit 1
+          fi
+          echo "PASS: HTML report generated at custom path with valid HTML content"

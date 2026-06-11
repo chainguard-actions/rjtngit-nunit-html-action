@@ -1,0 +1,29 @@
+name: Test basic NUnit HTML report generation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          inputXmlPath: ${{ github.workspace }}/actions/hardened/rjtngit--nunit-html-action/v1.0.1/tests/fixtures/test-results.xml
+          outputHtmlPath: /tmp/test-report.html
+      - name: Assert HTML output file was created
+        run: |
+          echo "Checking for HTML output at /tmp/test-report.html"
+          if [ ! -f /tmp/test-report.html ]; then
+            echo "FAIL: HTML output file was not created"
+            exit 1
+          fi
+          echo "PASS: HTML output file exists"
+      - name: Assert HTML output contains expected content
+        run: |
+          echo "Checking HTML content..."
+          if ! grep -qi "html" /tmp/test-report.html; then
+            echo "FAIL: Output file does not appear to be HTML"
+            exit 1
+          fi
+          echo "PASS: Output file contains HTML content"

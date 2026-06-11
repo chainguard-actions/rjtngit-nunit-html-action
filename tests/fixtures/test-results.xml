@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-results name="MyTests" total="3" errors="0" failures="1" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2024-01-01" time="12:00:00">
+  <environment nunit-version="2.6.4" clr-version="4.0.30319.42000" os-version="Unix 5.15.0.0" platform="Unix" cwd="/app" machine-name="test-machine" user="runner" user-domain="test" />
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="Assembly" name="MyTests.dll" executed="True" result="Failure" success="False" time="0.123" asserts="0">
+    <results>
+      <test-suite type="TestFixture" name="MyTests.SampleTests" executed="True" result="Failure" success="False" time="0.100" asserts="0">
+        <results>
+          <test-case name="MyTests.SampleTests.TestPass" executed="True" result="Success" success="True" time="0.010" asserts="1" />
+          <test-case name="MyTests.SampleTests.TestFail" executed="True" result="Failure" success="False" time="0.020" asserts="0">
+            <failure>
+              <message><![CDATA[Expected: 1, But was: 2]]></message>
+              <stack-trace><![CDATA[at MyTests.SampleTests.TestFail() in /app/SampleTests.cs:line 20]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="MyTests.SampleTests.TestPass2" executed="True" result="Success" success="True" time="0.005" asserts="1" />
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
