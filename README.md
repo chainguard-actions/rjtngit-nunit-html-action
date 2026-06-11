@@ -1,14 +1,45 @@
-# rjtngit/nunit-html-action
+# NUnit HTML Report
 
-Generates an HTML report from NUnit XML test results
+This Github Action generates a human-readable HTML report from NUnit XML test results.
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/rjtngit/nunit-html-action](https://github.com/rjtngit/nunit-html-action).
+![](example.png)
 
-## Versions
+## Usage
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v1.0.1 | [`v1.0.1`](https://github.com/chainguard-actions/rjtngit-nunit-html-action/tree/v1.0.1) | [`2d0208d`](https://github.com/rjtngit/nunit-html-action/commit/2d0208d2a33a892c5cfe770925cae8ecee96084d) |
+```yaml
+- name: Generate HTML test report
+  uses: rjtngit/nunit-html-action@v1
+  if: always()
+  with:
+    inputXmlPath: test_results/results.xml
+    outputHtmlPath: test_results/results.html
+```
+
+## Example
+
+```yaml
+steps:
+  - name: Run tests
+    uses: # your-test-runner
+  - name: Make output directory writable # Might be required if you are writing to an existing directory.
+    shell: bash
+    run: sudo chmod a+w test_results
+  - name: Generate HTML test report
+    uses: rjtngit/nunit-html-action@v1
+    if: always()
+    with:
+      inputXmlPath: test_results/results.xml
+      outputHtmlPath: test_results/results.html
+  - name: Upload test artifacts # So you can download the results from the workflow run.
+    uses: actions/upload-artifact@v3
+    if: always()
+    with:
+      path: test_results
+```
+
+## License
+
+The scripts and documentation in this project are released under the [MIT License](https://github.com/rjtngit/nunit-html-action/blob/main/LICENSE).
 
 ## Privacy
 

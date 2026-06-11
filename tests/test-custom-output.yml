@@ -1,0 +1,42 @@
+name: Test custom output HTML path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Copy fixture XML to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/actions/hardened/rjtngit--nunit-html-action/v1.0.2/tests/fixtures/results.xml" \
+             "$GITHUB_WORKSPACE/test-results.xml"
+      - id: action
+        uses: .
+        with:
+          inputXmlPath: "${{ github.workspace }}/test-results.xml"
+          outputHtmlPath: "${{ github.workspace }}/custom-output/report.html"
+      - name: Assert HTML output was created at custom path
+        run: |
+          OUTPUT_PATH="${GITHUB_WORKSPACE}/custom-output/report.html"
+          echo "Checking for HTML output at: $OUTPUT_PATH"
+          if [ ! -f "$OUTPUT_PATH" ]; then
+            echo "FAIL: Expected HTML file not found at $OUTPUT_PATH"
+            exit 1
+          fi
+          echo "PASS: HTML file exists at custom path"
+      - name: Assert HTML output contains summary data
+        run: |
+          OUTPUT_PATH="${GITHUB_WORKSPACE}/custom-output/report.html"
+          if ! grep -q "Passed" "$OUTPUT_PATH"; then
+            echo "FAIL: HTML output does not contain 'Passed'"
+            exit 1
+          fi
+          echo "PASS: HTML output contains test result data"
+      - name: Assert default path was NOT created
+        run: |
+          DEFAULT_PATH="${GITHUB_WORKSPACE}/test-results.html"
+          if [ -f "$DEFAULT_PATH" ]; then
+            echo "FAIL: Default HTML path was created when custom path was specified"
+            exit 1
+          fi
+          echo "PASS: Default path was not created"

@@ -1,0 +1,33 @@
+name: Test basic usage - required inputXmlPath only
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Copy fixture XML to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/actions/hardened/rjtngit--nunit-html-action/v1.0.2/tests/fixtures/results.xml" \
+             "$GITHUB_WORKSPACE/test-results.xml"
+      - id: action
+        uses: .
+        with:
+          inputXmlPath: "${{ github.workspace }}/test-results.xml"
+      - name: Assert HTML output was created (default path)
+        run: |
+          OUTPUT_PATH="${GITHUB_WORKSPACE}/test-results.html"
+          echo "Checking for HTML output at: $OUTPUT_PATH"
+          if [ ! -f "$OUTPUT_PATH" ]; then
+            echo "FAIL: Expected HTML file not found at $OUTPUT_PATH"
+            exit 1
+          fi
+          echo "PASS: HTML file exists"
+      - name: Assert HTML output contains expected content
+        run: |
+          OUTPUT_PATH="${GITHUB_WORKSPACE}/test-results.html"
+          if ! grep -q "Test Results" "$OUTPUT_PATH"; then
+            echo "FAIL: HTML output does not contain 'Test Results'"
+            exit 1
+          fi
+          echo "PASS: HTML output contains expected content"

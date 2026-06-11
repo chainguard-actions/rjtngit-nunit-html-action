@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="1" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2024-01-01 00:00:00Z" end-time="2024-01-01 00:00:01Z" duration="1.0">
+  <test-suite type="TestSuite" id="100" name="SampleTests" fullname="SampleTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2024-01-01 00:00:00Z" end-time="2024-01-01 00:00:01Z" duration="1.0" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties />
+    <test-suite type="TestFixture" id="101" name="BasicTests" fullname="BasicTests" classname="BasicTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2024-01-01 00:00:00Z" end-time="2024-01-01 00:00:01Z" duration="1.0" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties />
+      <test-case id="102" name="TestOne" fullname="BasicTests.TestOne" methodname="TestOne" classname="BasicTests" runstate="Runnable" seed="1" result="Passed" start-time="2024-01-01 00:00:00Z" end-time="2024-01-01 00:00:00Z" duration="0.5" asserts="0">
+        <properties />
+      </test-case>
+      <test-case id="103" name="TestTwo" fullname="BasicTests.TestTwo" methodname="TestTwo" classname="BasicTests" runstate="Runnable" seed="2" result="Passed" start-time="2024-01-01 00:00:00Z" end-time="2024-01-01 00:00:01Z" duration="0.5" asserts="0">
+        <properties />
+      </test-case>
+    </test-suite>
+  </test-suite>
+</test-run>
