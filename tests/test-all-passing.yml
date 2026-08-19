@@ -1,0 +1,82 @@
+name: Test all-passing scenario - NUnit XML with only passing tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Ensure python is available
+        run: |
+          if ! command -v python &>/dev/null; then
+            sudo ln -sf "$(command -v python3)" /usr/local/bin/python
+          fi
+          python --version
+
+      - name: Copy fixture XML to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/all-passing.xml" "$GITHUB_WORKSPACE/all-passing.xml"
+
+      - id: action
+        uses: .
+        with:
+          inputXmlPath: "${{ github.workspace }}/all-passing.xml"
+          outputHtmlPath: "${{ github.workspace }}/all-passing-report.html"
+
+      - name: Assert HTML file was created
+        run: |
+          EXPECTED_HTML="$GITHUB_WORKSPACE/all-passing-report.html"
+          echo "Checking for HTML file at: $EXPECTED_HTML"
+          if [ ! -f "$EXPECTED_HTML" ]; then
+            echo "FAIL: expected HTML file not found at $EXPECTED_HTML"
+            ls -la "$GITHUB_WORKSPACE/" || true
+            exit 1
+          fi
+          echo "PASS: HTML file exists"
+
+      - name: Assert HTML contains all-passing summary
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/all-passing-report.html"
+          echo "Checking HTML content for all-passing scenario..."
+
+          # Check for correct total count
+          if ! grep -q "Tests: 2" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Tests: 2'"
+            exit 1
+          fi
+          echo "PASS: HTML contains correct test count"
+
+          # Check for zero failures
+          if ! grep -q "Failed: 0" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Failed: 0'"
+            exit 1
+          fi
+          echo "PASS: HTML contains correct failed count (0)"
+
+          # Check for correct passed count
+          if ! grep -q "Passed: 2" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Passed: 2'"
+            exit 1
+          fi
+          echo "PASS: HTML contains correct passed count"
+
+          # Check for test names from fixture
+          if ! grep -q "AllPassingTests.FirstTest" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'AllPassingTests.FirstTest'"
+            exit 1
+          fi
+          echo "PASS: HTML contains first test name"
+
+          if ! grep -q "AllPassingTests.SecondTest" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'AllPassingTests.SecondTest'"
+            exit 1
+          fi
+          echo "PASS: HTML contains second test name"
+
+          # Verify no failure-related content for a clean run
+          if grep -q "Expected: 1 But was: 2" "$HTML_FILE"; then
+            echo "FAIL: HTML unexpectedly contains failure message from another fixture"
+            exit 1
+          fi
+          echo "PASS: HTML does not contain unexpected failure messages"

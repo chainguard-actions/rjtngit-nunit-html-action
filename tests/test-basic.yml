@@ -1,4 +1,4 @@
-name: Test basic NUnit HTML report generation
+name: Test basic usage - NUnit XML to HTML (default output path)
 on:
   workflow_dispatch:
 jobs:
@@ -6,24 +6,69 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Ensure python is available
+        run: |
+          if ! command -v python &>/dev/null; then
+            sudo ln -sf "$(command -v python3)" /usr/local/bin/python
+          fi
+          python --version
+
+      - name: Copy fixture XML to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/mixed-results.xml" "$GITHUB_WORKSPACE/test-results.xml"
+
       - id: action
         uses: .
         with:
-          inputXmlPath: ${{ github.workspace }}/actions/hardened/rjtngit--nunit-html-action/v1.0.1/tests/fixtures/test-results.xml
-          outputHtmlPath: /tmp/test-report.html
-      - name: Assert HTML output file was created
+          inputXmlPath: "${{ github.workspace }}/test-results.xml"
+
+      - name: Assert HTML file was created at default path
         run: |
-          echo "Checking for HTML output at /tmp/test-report.html"
-          if [ ! -f /tmp/test-report.html ]; then
-            echo "FAIL: HTML output file was not created"
+          EXPECTED_HTML="$GITHUB_WORKSPACE/test-results.html"
+          echo "Checking for HTML file at: $EXPECTED_HTML"
+          if [ ! -f "$EXPECTED_HTML" ]; then
+            echo "FAIL: expected HTML file not found at $EXPECTED_HTML"
+            ls -la "$GITHUB_WORKSPACE/" || true
             exit 1
           fi
-          echo "PASS: HTML output file exists"
-      - name: Assert HTML output contains expected content
+          echo "PASS: HTML file exists"
+
+      - name: Assert HTML file contains expected content
         run: |
+          HTML_FILE="$GITHUB_WORKSPACE/test-results.html"
           echo "Checking HTML content..."
-          if ! grep -qi "html" /tmp/test-report.html; then
-            echo "FAIL: Output file does not appear to be HTML"
+
+          # Check for Bootstrap CSS (from markyp-bootstrap4)
+          if ! grep -q "bootstrap" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain bootstrap reference"
+            head -50 "$HTML_FILE"
             exit 1
           fi
-          echo "PASS: Output file contains HTML content"
+          echo "PASS: HTML contains bootstrap reference"
+
+          # Check for test name from the fixture
+          if ! grep -q "SampleTests.FailingTest" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain expected test name 'SampleTests.FailingTest'"
+            exit 1
+          fi
+          echo "PASS: HTML contains expected test name"
+
+          # Check for summary counts
+          if ! grep -q "Tests: 3" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Tests: 3'"
+            exit 1
+          fi
+          echo "PASS: HTML contains correct test count"
+
+          if ! grep -q "Failed: 1" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Failed: 1'"
+            exit 1
+          fi
+          echo "PASS: HTML contains correct failed count"
+
+          if ! grep -q "Passed: 2" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Passed: 2'"
+            exit 1
+          fi
+          echo "PASS: HTML contains correct passed count"

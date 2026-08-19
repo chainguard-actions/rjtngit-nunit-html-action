@@ -1,0 +1,84 @@
+name: Test NUnit XML with failed tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create NUnit XML input file with failures
+        run: |
+          cat > /tmp/failed-results.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <test-run id="2" testcasecount="3" result="Failed" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2022-04-22 19:08:51Z" end-time="2022-04-22 19:08:51Z" duration="0.5">
+            <test-suite type="TestSuite" id="1000" name="FailTests" fullname="FailTests" runstate="Runnable" testcasecount="3" result="Failed" site="Child" start-time="2022-04-22 19:08:51Z" end-time="2022-04-22 19:08:51Z" duration="0.5" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1001" name="PassingTest" fullname="FailTests.PassingTest" methodname="PassingTest" classname="FailTests" runstate="Runnable" seed="111" result="Passed" start-time="2022-04-22 19:08:51Z" end-time="2022-04-22 19:08:51Z" duration="0.1" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1002" name="AnotherPassingTest" fullname="FailTests.AnotherPassingTest" methodname="AnotherPassingTest" classname="FailTests" runstate="Runnable" seed="222" result="Passed" start-time="2022-04-22 19:08:51Z" end-time="2022-04-22 19:08:51Z" duration="0.1" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1003" name="FailingTest" fullname="FailTests.FailingTest" methodname="FailingTest" classname="FailTests" runstate="Runnable" seed="333" result="Failed" start-time="2022-04-22 19:08:51Z" end-time="2022-04-22 19:08:51Z" duration="0.3" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[Expected 1 but was 2]]></message>
+                  <stack-trace><![CDATA[at FailTests.FailingTest() in /src/Tests.cs:42]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+          </test-run>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          inputXmlPath: /tmp/failed-results.xml
+          outputHtmlPath: /tmp/failed-report.html
+
+      - name: Assert HTML file was created
+        run: |
+          EXPECTED_HTML="/tmp/failed-report.html"
+          echo "Checking for HTML file at: $EXPECTED_HTML"
+          if [ ! -f "$EXPECTED_HTML" ]; then
+            echo "FAIL: HTML file was not created at $EXPECTED_HTML"
+            exit 1
+          fi
+          echo "PASS: HTML file exists"
+
+      - name: Assert HTML contains failure information
+        run: |
+          HTML_FILE="/tmp/failed-report.html"
+          echo "Checking HTML content for failure details..."
+          if ! grep -q "FailTests.FailingTest" "$HTML_FILE"; then
+            echo "FAIL: HTML file does not contain failing test case name"
+            exit 1
+          fi
+          if ! grep -q "Expected 1 but was 2" "$HTML_FILE"; then
+            echo "FAIL: HTML file does not contain failure message"
+            exit 1
+          fi
+          echo "PASS: HTML file contains failure information"
+
+      - name: Assert HTML contains summary counts
+        run: |
+          HTML_FILE="/tmp/failed-report.html"
+          echo "Checking HTML content for summary..."
+          if ! grep -q "Tests: 3" "$HTML_FILE"; then
+            echo "FAIL: HTML file does not contain total test count"
+            cat "$HTML_FILE" | grep -i "tests:" || echo "No 'Tests:' found"
+            exit 1
+          fi
+          if ! grep -q "Failed: 1" "$HTML_FILE"; then
+            echo "FAIL: HTML file does not contain failed count"
+            exit 1
+          fi
+          if ! grep -q "Passed: 2" "$HTML_FILE"; then
+            echo "FAIL: HTML file does not contain passed count"
+            exit 1
+          fi
+          echo "PASS: HTML file contains correct summary counts"

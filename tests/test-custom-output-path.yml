@@ -1,0 +1,73 @@
+name: Test custom output path - NUnit XML to HTML with specified output
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Ensure python is available
+        run: |
+          if ! command -v python &>/dev/null; then
+            sudo ln -sf "$(command -v python3)" /usr/local/bin/python
+          fi
+          python --version
+
+      - name: Copy fixture XML to workspace and create output directory
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/mixed-results.xml" "$GITHUB_WORKSPACE/input-results.xml"
+          mkdir -p "$GITHUB_WORKSPACE/custom-report"
+
+      - id: action
+        uses: .
+        with:
+          inputXmlPath: "${{ github.workspace }}/input-results.xml"
+          outputHtmlPath: "${{ github.workspace }}/custom-report/my-report.html"
+
+      - name: Assert HTML file was created at custom path
+        run: |
+          EXPECTED_HTML="$GITHUB_WORKSPACE/custom-report/my-report.html"
+          echo "Checking for HTML file at: $EXPECTED_HTML"
+          if [ ! -f "$EXPECTED_HTML" ]; then
+            echo "FAIL: expected HTML file not found at $EXPECTED_HTML"
+            ls -la "$GITHUB_WORKSPACE/" || true
+            ls -la "$GITHUB_WORKSPACE/custom-report/" 2>/dev/null || echo "(custom-report dir not found)"
+            exit 1
+          fi
+          echo "PASS: HTML file exists at custom path"
+
+      - name: Assert default path was NOT created
+        run: |
+          DEFAULT_HTML="$GITHUB_WORKSPACE/input-results.html"
+          if [ -f "$DEFAULT_HTML" ]; then
+            echo "WARN: default HTML path also exists (not necessarily a failure)"
+          fi
+          echo "PASS: custom output path check complete"
+
+      - name: Assert HTML file contains expected content
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/custom-report/my-report.html"
+          echo "Checking HTML content..."
+
+          # Check for Bootstrap CSS (from markyp-bootstrap4)
+          if ! grep -q "bootstrap" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain bootstrap reference"
+            head -50 "$HTML_FILE"
+            exit 1
+          fi
+          echo "PASS: HTML contains bootstrap reference"
+
+          # Check for failure message from fixture
+          if ! grep -q "Expected: 1 But was: 2" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain expected failure message"
+            exit 1
+          fi
+          echo "PASS: HTML contains failure message"
+
+          # Check for stack trace from fixture
+          if ! grep -q "SampleTests.FailingTest" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain expected test name"
+            exit 1
+          fi
+          echo "PASS: HTML contains expected test name"

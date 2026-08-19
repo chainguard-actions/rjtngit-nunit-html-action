@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="1" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2023-06-15 08:30:00Z" end-time="2023-06-15 08:30:01Z" duration="0.500000">
+  <test-suite type="TestSuite" id="2000" name="AllPassingTests" fullname="AllPassingTests" runstate="Runnable" testcasecount="2" result="Passed" site="Child" start-time="2023-06-15 08:30:00Z" end-time="2023-06-15 08:30:01Z" duration="0.500000" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties />
+    <test-case id="2001" name="FirstTest" fullname="AllPassingTests.FirstTest" methodname="FirstTest" classname="AllPassingTests" runstate="Runnable" seed="100" result="Passed" start-time="2023-06-15 08:30:00Z" end-time="2023-06-15 08:30:00Z" duration="0.200000" asserts="0">
+      <properties />
+    </test-case>
+    <test-case id="2002" name="SecondTest" fullname="AllPassingTests.SecondTest" methodname="SecondTest" classname="AllPassingTests" runstate="Runnable" seed="200" result="Passed" start-time="2023-06-15 08:30:00Z" end-time="2023-06-15 08:30:01Z" duration="0.300000" asserts="0">
+      <properties />
+    </test-case>
+  </test-suite>
+</test-run>
