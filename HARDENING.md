@@ -8,28 +8,41 @@
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
-**Harden Agent Version:** `1`
+**Harden Agent Version:** `2`
 
-Action **rjtngit--nunit-html-action/v1.0.2** was hardened automatically. 4 finding(s) were identified and resolved across 1 iteration(s).
+Action **rjtngit--nunit-html-action/v1.0.2** was hardened automatically. 5 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### script-injection (severity: high)
 
-The 'Run python script' step directly interpolates GitHub Actions expressions into the `run:` shell command string (sub-rule a). Line 21 uses `${{ github.action_path }}` and line 22 uses `${{ github.action_path }}`, `${{ inputs.inputXmlPath }}`, and `${{ inputs.outputHtmlPath }}`. The `inputs.*` values are attacker-controlled and are passed directly as positional arguments to `python`, enabling command injection. All `${{ ... }}` expressions must be moved to `env:` variables and then referenced as double-quoted shell variables (e.g., `"$INPUT_XML_PATH"`).
+The `run:` block in action.yml directly interpolates GitHub Actions expressions inside shell commands without routing them through env vars. Specifically: `${{ github.action_path }}` (rule a — any expression in a run block is a script-injection risk), `${{ inputs.inputXmlPath }}` (rule a — attacker-controlled input interpolated directly into shell), and `${{ inputs.outputHtmlPath }}` (rule a — attacker-controlled input interpolated directly into shell). An attacker calling this composite action can supply a crafted `inputXmlPath` or `outputHtmlPath` value containing shell metacharacters (`;`, `|`, `$(...)`, etc.) that will be executed by the runner shell. The fix is to move all expressions into `env:` variables and double-quote their expansions in the script.
 
 Locations:
 
-- `action.yml:21`
-- `action.yml:22`
+- `action.yml:20`
 
 ### unpinned-uses (severity: high)
 
-The step 'Set up Python' references `actions/setup-python@v4`, which uses a mutable version tag (`v4`) instead of a full 40-character commit SHA. A tag can be moved to point to a different (potentially malicious) commit, enabling supply-chain attacks. Pin to a specific commit SHA, e.g., `actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v4`.
+Multiple `uses:` references are pinned to mutable version tags instead of immutable 40-character commit SHAs, making the action vulnerable to supply-chain attacks if the upstream tag is moved or compromised. Failing references:
+- `action.yml`: `uses: actions/setup-python@v4` (tag `v4`)
+- `.github/workflows/test.yml`: `uses: actions/checkout@v3` (tag `v3`)
+- `.github/workflows/test.yml`: `uses: actions/upload-artifact@v3` (tag `v3`)
+All should be pinned to a full SHA, e.g. `actions/setup-python@<40-hex-char-sha> # v4`.
 
 Locations:
 
-- `action.yml:15`
+- `action.yml:17`
+- `.github/workflows/test.yml:8`
+- `.github/workflows/test.yml:14`
+
+### missing-permissions (severity: medium)
+
+The workflow file `.github/workflows/test.yml` has no top-level `permissions:` key and the only job (`generate-html`) also has no job-level `permissions:` key. Without an explicit permissions block the workflow inherits the repository's default token permissions, which may be overly broad (e.g. `write` on `contents`). A minimal explicit `permissions:` block (e.g. `permissions: {}` or only the scopes actually needed) should be added at the top level or on the job.
+
+Locations:
+
+- `.github/workflows/test.yml:1`
 
 ### static-inline-injection (severity: high)
 
@@ -51,9 +64,9 @@ Locations:
 
 ### Iteration 1
 
-**Fixes applied:** unpinned-uses, script-injection, static-inline-injection
+**Fixes applied:** script-injection, static-inline-injection, unpinned-uses, missing-permissions
 
 **Notes:**
 
-Fixed action.yml: (1) Pinned actions/setup-python@v4 to full SHA 7f4fc3e22c37d6ff65e88745f38bd3157c663f7c with # v4 comment. (2) Moved all ${{ github.action_path }}, ${{ inputs.inputXmlPath }}, and ${{ inputs.outputHtmlPath }} expressions out of the run: block into an env: map as ACTION_PATH, INPUT_XML_PATH, and OUTPUT_HTML_PATH respectively. Referenced them as double-quoted shell variables in the run: block. Used ${OUTPUT_HTML_PATH:+"$OUTPUT_HTML_PATH"} for the optional outputHtmlPath argument to avoid passing an empty positional argument when the value is unset.
+Fixed action.yml: (1) pinned actions/setup-python@v4 to SHA 7f4fc3e22c37d6ff65e88745f38bd3157c663f7c, (2) moved all ${{ }} expressions (github.action_path, inputs.inputXmlPath, inputs.outputHtmlPath) into an env: block and referenced them as double-quoted shell variables in the run: script, using ${OUTPUT_HTML_PATH:+"$OUTPUT_HTML_PATH"} for the optional argument. Fixed .github/workflows/test.yml: (1) added top-level `permissions: {}`, (2) pinned actions/checkout@v3 to SHA a37ce9120846195fa4ece8f58b268e6043cb2f26, (3) pinned actions/upload-artifact@v3 to SHA ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5.
 

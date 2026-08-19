@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="1" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2023-01-01 10:00:00Z" end-time="2023-01-01 10:00:01Z" duration="1.000000">
+  <test-suite type="TestSuite" id="100" name="AllPassingTests" fullname="AllPassingTests" runstate="Runnable" testcasecount="3" result="Passed" site="Child" start-time="2023-01-01 10:00:00Z" end-time="2023-01-01 10:00:01Z" duration="1.000000" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties />
+    <test-suite type="TestFixture" id="101" name="MyTests" fullname="MyTests" classname="MyTests" runstate="Runnable" testcasecount="3" result="Passed" site="Child" start-time="2023-01-01 10:00:00Z" end-time="2023-01-01 10:00:01Z" duration="1.000000" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties />
+      <test-case id="102" name="TestOne" fullname="MyTests.TestOne" methodname="TestOne" classname="MyTests" runstate="Runnable" seed="111" result="Passed" start-time="2023-01-01 10:00:00Z" end-time="2023-01-01 10:00:00Z" duration="0.100000" asserts="0">
+        <properties />
+      </test-case>
+      <test-case id="103" name="TestTwo" fullname="MyTests.TestTwo" methodname="TestTwo" classname="MyTests" runstate="Runnable" seed="222" result="Passed" start-time="2023-01-01 10:00:00Z" end-time="2023-01-01 10:00:00Z" duration="0.200000" asserts="0">
+        <properties />
+      </test-case>
+      <test-case id="104" name="TestThree" fullname="MyTests.TestThree" methodname="TestThree" classname="MyTests" runstate="Runnable" seed="333" result="Passed" start-time="2023-01-01 10:00:00Z" end-time="2023-01-01 10:00:01Z" duration="0.700000" asserts="0">
+        <properties />
+      </test-case>
+    </test-suite>
+  </test-suite>
+</test-run>

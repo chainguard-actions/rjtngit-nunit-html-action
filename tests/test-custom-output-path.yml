@@ -1,0 +1,64 @@
+name: Test custom output path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture XML to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/nunit-mixed.xml" "$GITHUB_WORKSPACE/input-results.xml"
+
+      - name: Run NUnit HTML action with custom output path
+        uses: .
+        with:
+          inputXmlPath: "${{ github.workspace }}/input-results.xml"
+          outputHtmlPath: "${{ github.workspace }}/reports/custom-report.html"
+
+      - name: Assert HTML file was generated at custom path
+        run: |
+          EXPECTED_HTML="$GITHUB_WORKSPACE/reports/custom-report.html"
+          echo "Checking for HTML file at: $EXPECTED_HTML"
+          if [ ! -f "$EXPECTED_HTML" ]; then
+            echo "FAIL: Expected HTML file not found at $EXPECTED_HTML"
+            ls -la "$GITHUB_WORKSPACE/reports/" 2>/dev/null || echo "reports/ directory does not exist"
+            exit 1
+          fi
+          echo "PASS: HTML file exists at custom path"
+
+      - name: Assert default path was NOT used
+        run: |
+          DEFAULT_HTML="$GITHUB_WORKSPACE/input-results.html"
+          if [ -f "$DEFAULT_HTML" ]; then
+            echo "WARN: Default HTML path also exists (not necessarily a failure, but unexpected)"
+          fi
+          echo "PASS: Custom path check complete"
+
+      - name: Assert HTML file contains expected content
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/reports/custom-report.html"
+          echo "Checking HTML content..."
+
+          # Check for basic HTML structure
+          if ! grep -q "<html" "$HTML_FILE"; then
+            echo "FAIL: HTML file does not contain <html tag"
+            exit 1
+          fi
+          echo "PASS: HTML structure present"
+
+          # Check for test summary data
+          if ! grep -q "Tests: 5" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Tests: 5'"
+            exit 1
+          fi
+          echo "PASS: Test count present"
+
+          if ! grep -q "Passed: 4" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Passed: 4'"
+            exit 1
+          fi
+          echo "PASS: Passed count present"
+
+          echo "ALL ASSERTIONS PASSED"

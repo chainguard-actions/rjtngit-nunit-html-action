@@ -1,4 +1,4 @@
-name: Test basic usage - required inputXmlPath only
+name: Test basic usage - default output path
 on:
   workflow_dispatch:
 jobs:
@@ -6,28 +6,70 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
       - name: Copy fixture XML to workspace
         run: |
-          cp "$GITHUB_WORKSPACE/actions/hardened/rjtngit--nunit-html-action/v1.0.2/tests/fixtures/results.xml" \
-             "$GITHUB_WORKSPACE/test-results.xml"
-      - id: action
+          cp "$GITHUB_WORKSPACE/tests/fixtures/nunit-mixed.xml" "$GITHUB_WORKSPACE/test-results.xml"
+
+      - name: Run NUnit HTML action with default output path
         uses: .
         with:
           inputXmlPath: "${{ github.workspace }}/test-results.xml"
-      - name: Assert HTML output was created (default path)
+
+      - name: Assert HTML file was generated at default path
         run: |
-          OUTPUT_PATH="${GITHUB_WORKSPACE}/test-results.html"
-          echo "Checking for HTML output at: $OUTPUT_PATH"
-          if [ ! -f "$OUTPUT_PATH" ]; then
-            echo "FAIL: Expected HTML file not found at $OUTPUT_PATH"
+          EXPECTED_HTML="$GITHUB_WORKSPACE/test-results.html"
+          echo "Checking for HTML file at: $EXPECTED_HTML"
+          if [ ! -f "$EXPECTED_HTML" ]; then
+            echo "FAIL: Expected HTML file not found at $EXPECTED_HTML"
+            ls -la "$GITHUB_WORKSPACE/" || true
             exit 1
           fi
           echo "PASS: HTML file exists"
-      - name: Assert HTML output contains expected content
+
+      - name: Assert HTML file contains expected content
         run: |
-          OUTPUT_PATH="${GITHUB_WORKSPACE}/test-results.html"
-          if ! grep -q "Test Results" "$OUTPUT_PATH"; then
-            echo "FAIL: HTML output does not contain 'Test Results'"
+          HTML_FILE="$GITHUB_WORKSPACE/test-results.html"
+          echo "Checking HTML content..."
+
+          # Check for basic HTML structure
+          if ! grep -q "<html" "$HTML_FILE"; then
+            echo "FAIL: HTML file does not contain <html tag"
             exit 1
           fi
-          echo "PASS: HTML output contains expected content"
+          echo "PASS: HTML structure present"
+
+          # Check for test summary data (total=5, passed=4, failed=1)
+          if ! grep -q "Tests: 5" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Tests: 5'"
+            cat "$HTML_FILE" | head -50
+            exit 1
+          fi
+          echo "PASS: Test count present"
+
+          if ! grep -q "Failed: 1" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Failed: 1'"
+            exit 1
+          fi
+          echo "PASS: Failed count present"
+
+          if ! grep -q "Passed: 4" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Passed: 4'"
+            exit 1
+          fi
+          echo "PASS: Passed count present"
+
+          # Check for test case names
+          if ! grep -q "MoreTests.FailingTest" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain failing test name"
+            exit 1
+          fi
+          echo "PASS: Failing test name present"
+
+          if ! grep -q "Intentional failure" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain failure message"
+            exit 1
+          fi
+          echo "PASS: Failure message present"
+
+          echo "ALL ASSERTIONS PASSED"
