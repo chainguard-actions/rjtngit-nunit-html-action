@@ -6,25 +6,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture XML to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/nunit-mixed.xml" "$GITHUB_WORKSPACE/results.xml"
+
       - id: action
         uses: .
         with:
-          inputXmlPath: ${{ github.workspace }}/actions/hardened/rjtngit--nunit-html-action/v2.0.0/tests/fixtures/test-results.xml
-      - name: Assert HTML output was generated
+          inputXmlPath: "${{ github.workspace }}/results.xml"
+
+      - name: Assert HTML file was created at default path
         run: |
-          # When outputHtmlPath is not specified, main.py replaces .xml with .html
-          # test-results.xml -> test-results.html
-          EXPECTED_HTML="${GITHUB_WORKSPACE}/actions/hardened/rjtngit--nunit-html-action/v2.0.0/tests/fixtures/test-results.html"
-          echo "Checking for HTML output at: $EXPECTED_HTML"
-          if [ ! -f "$EXPECTED_HTML" ]; then
-            echo "FAIL: Expected HTML file not found at $EXPECTED_HTML"
+          DEFAULT_HTML="$GITHUB_WORKSPACE/results.html"
+          echo "Checking for HTML file at: $DEFAULT_HTML"
+          if [ ! -f "$DEFAULT_HTML" ]; then
+            echo "FAIL: expected HTML file not found at $DEFAULT_HTML"
             exit 1
           fi
-          echo "PASS: HTML file was generated at default path"
-          if grep -qi "<html" "$EXPECTED_HTML"; then
-            echo "PASS: Output file contains HTML content"
-          else
-            echo "FAIL: Output file does not contain HTML content"
-            cat "$EXPECTED_HTML"
+          echo "PASS: HTML file exists"
+
+      - name: Assert HTML content contains test summary
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/results.html"
+          echo "Checking HTML content..."
+          if ! grep -q "Test Results" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Test Results' page title"
             exit 1
           fi
+          if ! grep -q "Tests:" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Tests:' summary"
+            exit 1
+          fi
+          if ! grep -q "Failed:" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Failed:' summary"
+            exit 1
+          fi
+          if ! grep -q "Passed:" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Passed:' summary"
+            exit 1
+          fi
+          echo "PASS: HTML content looks correct"
+
+      - name: Assert HTML contains failing test details
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/results.html"
+          if ! grep -q "FailingTest1" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain failing test name 'FailingTest1'"
+            exit 1
+          fi
+          if ! grep -q "Expected: 1 But was: 2" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain failure message"
+            exit 1
+          fi
+          echo "PASS: Failing test details present in HTML"

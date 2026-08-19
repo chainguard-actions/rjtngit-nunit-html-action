@@ -1,0 +1,70 @@
+name: Test all-passing NUnit results
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture XML to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/nunit-passing.xml" "$GITHUB_WORKSPACE/passing-results.xml"
+
+      - id: action
+        uses: .
+        with:
+          inputXmlPath: "${{ github.workspace }}/passing-results.xml"
+          outputHtmlPath: "${{ github.workspace }}/passing-report.html"
+
+      - name: Assert HTML file was created
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/passing-report.html"
+          echo "Checking for HTML file at: $HTML_FILE"
+          if [ ! -f "$HTML_FILE" ]; then
+            echo "FAIL: expected HTML file not found at $HTML_FILE"
+            exit 1
+          fi
+          echo "PASS: HTML file exists"
+
+      - name: Assert HTML shows all tests passed
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/passing-report.html"
+          # Check summary badges are present
+          if ! grep -q "Tests:" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Tests:' summary"
+            exit 1
+          fi
+          if ! grep -q "Passed:" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain 'Passed:' summary"
+            exit 1
+          fi
+          echo "PASS: HTML summary present"
+
+      - name: Assert HTML contains passing test names
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/passing-report.html"
+          if ! grep -q "AllPassingTests.TestAlpha" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain test 'AllPassingTests.TestAlpha'"
+            exit 1
+          fi
+          if ! grep -q "AllPassingTests.TestBeta" "$HTML_FILE"; then
+            echo "FAIL: HTML does not contain test 'AllPassingTests.TestBeta'"
+            exit 1
+          fi
+          echo "PASS: All passing test names found in HTML"
+
+      - name: Assert HTML file is non-empty and well-formed
+        run: |
+          HTML_FILE="$GITHUB_WORKSPACE/passing-report.html"
+          SIZE=$(wc -c < "$HTML_FILE")
+          echo "HTML file size: $SIZE bytes"
+          if [ "$SIZE" -lt 100 ]; then
+            echo "FAIL: HTML file is suspiciously small ($SIZE bytes)"
+            exit 1
+          fi
+          if ! grep -q "<html" "$HTML_FILE"; then
+            echo "FAIL: HTML file does not contain an <html> tag"
+            exit 1
+          fi
+          echo "PASS: HTML file is non-empty and contains HTML structure"
