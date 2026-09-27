@@ -29,18 +29,17 @@ runs:
           -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
           "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
     - name: Set up Python
-      uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
+      uses: chainguard-actions/actions-setup-python@8d57ecf645562740357c72731d1ef2ae6f1ef2e7 # v4
       with:
         python-version: "3.x"
     - name: Run python script
       shell: bash
       env:
-        ACTION_PATH: ${{ github.action_path }}
         INPUT_XML_PATH: ${{ inputs.inputXmlPath }}
         OUTPUT_HTML_PATH: ${{ inputs.outputHtmlPath }}
       run: |
-        python -m pip install -r "$ACTION_PATH/requirements.txt"
-        python "$ACTION_PATH/main.py" "$INPUT_XML_PATH" ${OUTPUT_HTML_PATH:+"$OUTPUT_HTML_PATH"}
+        python -m pip install -r "$GITHUB_ACTION_PATH/requirements.txt"
+        python "$GITHUB_ACTION_PATH/main.py" "$INPUT_XML_PATH" ${OUTPUT_HTML_PATH:+"$OUTPUT_HTML_PATH"}
 branding:
   icon: "file"
   color: "green"
